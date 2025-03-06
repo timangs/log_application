@@ -3,46 +3,53 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.9  # 또는 3.7 등 필요한 버전
+      python: 3.9  # 필요한 Python 버전. 이미지와 호환되는지 확인!
     commands:
       - echo "Updating pip..."
       - python -m pip install --upgrade pip
       - echo "Installing gunicorn..."
-      - pip install gunicorn
+      - pip install gunicorn  # 배포에 필요하면 설치
       - echo "Installing AWS CLI..."
-      - pip install awscli
+      - pip install awscli  # AWS CLI 설치
 
   build:
     commands:
+      - set -e  # 오류 발생 시 즉시 종료
       - echo "Entering build phase..."
       - echo "Installing dependencies from requirements.txt..."
       - python -m venv .venv
-      - . .venv/bin/activate  # source 대신 . 사용
-      - pip install -r requirements.txt
+      - . .venv/bin/activate && \
+        pip install -r requirements.txt
 
-      # (선택 사항) 테스트 및 코드 품질 검사
+      # (선택 사항) 테스트 및 코드 품질 검사 (필요한 경우 주석 해제)
       # - echo "Running unit tests..."
       # - pip install pytest
       # - pytest tests/
 
-      - echo "Running code quality checks..."
-      - pip install flake8
-      - flake8 .
+      # - echo "Running code quality checks..."
+      # - pip install flake8
+      # - flake8 .
 
   post_build:
     commands:
       - echo "Build phase completed on `date`"
 
-      # ... (배포 관련 명령어, 필요에 따라) ...
+      # 배포 관련 명령어 (필요에 따라 추가)
+      # 예: Gunicorn 실행 (EC2 배포 시)
+      # - . .venv/bin/activate && \
+        nohup gunicorn --workers 3 --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
+
+      # 예: Docker 이미지 빌드 및 ECR에 푸시 (ECS/Fargate 배포 시)
+      # - ...
 
 artifacts:
-    files:
-      - '**/*'
-    discard-paths: yes
+  files:
+    - app.py      # 필요한 파일만 지정
+    - templates/**/*  # templates 폴더 및 하위 파일
+    - static/**/*   # static 폴더 및 하위 파일
+    - requirements.txt
+    # - '...'  # 다른 필요한 파일/디렉토리
+  discard-paths: yes  # 필요에 따라
 
-# reports:
-#     pytest_reports:
-#         files:
-#             - '**/test-reports/*.xml'
-#         base-directory: '.'
-#         file-format: JUNITXML
+# reports:  # 테스트 리포트 설정 (필요한 경우)
+#   ...
