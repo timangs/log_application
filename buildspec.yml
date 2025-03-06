@@ -3,72 +3,46 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.9  # 필요한 Python 버전으로 변경.  3.7을 사용해야 한다면 명시.
+      python: 3.9  # 또는 3.7 등 필요한 버전
     commands:
       - echo "Updating pip..."
       - python -m pip install --upgrade pip
       - echo "Installing gunicorn..."
-      - pip install gunicorn  # 배포에 필요하면 설치
+      - pip install gunicorn
       - echo "Installing AWS CLI..."
-      - pip install awscli  # AWS CLI 설치 (AWS 리소스와 상호작용이 필요하면)
+      - pip install awscli
 
   build:
     commands:
       - echo "Entering build phase..."
       - echo "Installing dependencies from requirements.txt..."
-      - python -m venv .venv # 가상 환경 생성. CodeBuild는 격리된 환경에서 실행되므로, 항상 새로 생성.
-      - source .venv/bin/activate
+      - python -m venv .venv
+      - . .venv/bin/activate  # source 대신 . 사용
       - pip install -r requirements.txt
 
-      # (선택 사항) 단위 테스트 실행
+      # (선택 사항) 테스트 및 코드 품질 검사
       - echo "Running unit tests..."
-      - pip install pytest  # pytest 설치 (필요한 경우)
-      - pytest tests/  # 'tests/' 디렉토리에 테스트 코드가 있다고 가정.  경로 조정 필요.
+      - pip install pytest
+      - pytest tests/
 
-      # (선택 사항) 코드 품질 검사
       - echo "Running code quality checks..."
-      - pip install flake8  # flake8 설치 (필요한 경우)
-      - flake8 .  # 프로젝트 루트에서 flake8 실행
+      - pip install flake8
+      - flake8 .
 
   post_build:
     commands:
       - echo "Build phase completed on `date`"
 
-      # (선택 사항) 아티팩트 S3에 업로드 (CodePipeline 사용 시)
-      # - aws s3 cp --recursive --acl public-read ./ s3://your-s3-bucket-name/your-app-name/$CODEBUILD_BUILD_NUMBER/
-
-      # (선택 사항) Docker 이미지 빌드 및 ECR에 푸시
-      # - echo "Building Docker image..."
-      # - docker build -t your-ecr-repo-uri:latest .
-      # - echo "Logging in to Amazon ECR..."
-      # - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin your-aws-account-id.dkr.ecr.$AWS_REGION.amazonaws.com
-      # - echo "Pushing Docker image to ECR..."
-      # - docker push your-ecr-repo-uri:latest
-
-      # (선택 사항) ECS/Fargate 배포 (CodePipeline 사용 시)
-      # - printf '[{"name":"your-container-name","imageUri":"%s"}]' "$your-ecr-repo-uri:latest" > imagedefinitions.json
-      # - aws deploy create-deployment --application-name your-codedeploy-app-name --deployment-group-name your-deployment-group-name --deployment-config-name your-deployment-config-name --s3-location bucket=your-s3-bucket-name,key=your-app-name/$CODEBUILD_BUILD_NUMBER/imagedefinitions.json,bundleType=JSON
-
-      # (선택 사항) CodeDeploy를 사용하여 EC2에 배포 (CodePipeline 사용 시)
-      # CodeDeploy를 사용하려면, EC2 인스턴스에 CodeDeploy Agent가 설치되어 있어야 하고,
-      # CodeDeploy 애플리케이션, 배포 그룹, 배포 구성이 미리 설정되어 있어야 합니다.
-      # - echo "Deploying to EC2 with CodeDeploy..."
-      # - aws deploy create-deployment \
-      #     --application-name your-codedeploy-app-name \
-      #     --deployment-group-name your-deployment-group-name \
-      #     --deployment-config-name your-deployment-config-name \
-      #     --github-location repository=your-github-repo,commitId=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      # ... (배포 관련 명령어, 필요에 따라) ...
 
 artifacts:
     files:
-      - '**/*' # 모든 파일.  필요한 파일/디렉토리만 지정하는 것이 좋음.
-    # (선택 사항) 특정 디렉토리 지정
-    # base-directory: 'dist'
-    discard-paths: yes # (선택 사항)  'yes'로 설정하면, S3에 업로드할 때 경로 정보가 제거됨
+      - '**/*'
+    discard-paths: yes
 
-reports: # (선택 사항) 테스트 리포트
-    pytest_reports: # 리포트 그룹 이름
+reports:
+    pytest_reports:
         files:
-            - '**/test-reports/*.xml' # 테스트 결과 파일 경로 (pytest의 --junitxml 옵션 사용)
-        base-directory: '.' # Optional
-        file-format: JUNITXML # Optional
+            - '**/test-reports/*.xml'
+        base-directory: '.'
+        file-format: JUNITXML
