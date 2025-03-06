@@ -3,36 +3,36 @@ version: 0.2
 phases:
   install:
     commands:
+      - echo "Removing existing .pyenv directory (if any)..."
+      - rm -rf /root/.pyenv  # .pyenv 디렉토리 강제 삭제 (존재하는 경우)
+
       - echo "Installing pyenv..."
       - curl https://pyenv.run | bash
       - echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
       - echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
       - echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n eval "$(pyenv init -)"\nfi' >> ~/.bashrc
       - source ~/.bashrc  # 변경된 환경 변수 적용
-      - echo "Installing Python 3.9.18..." # 원하는 python version으로 변경
-      - pyenv install 3.9.18  # 원하는 Python 3.9.x 버전으로 변경
-      - pyenv global 3.9.18       # 시스템 전체의 기본 Python 버전으로 설정
+      - echo "Installing Python 3.9.18..."
+      - pyenv install 3.9.18
+      - pyenv global 3.9.18
       - echo "Updating pip..."
       - python -m pip install --upgrade pip
       - echo "Installing gunicorn and AWS CLI..."
-      - pip install gunicorn awscli  # 한 번에 설치
+      - pip install gunicorn awscli
 
   build:
     commands:
       - set -e
       - echo "Entering build phase..."
       - echo "Installing dependencies from requirements.txt..."
-      - python -m venv .venv  # pyenv로 설치한 Python을 사용하여 가상 환경 생성
+      - python -m venv .venv
       - . .venv/bin/activate
       - pip install -r requirements.txt
-
-      # (선택 사항) 테스트 및 코드 품질 검사 (필요한 경우 주석 해제)
-      # - ...
+      # ... (테스트, 코드 품질 검사 등)
 
   post_build:
     commands:
       - echo "Build phase completed on `date`"
-       # 가상 환경 활성화 후 Gunicorn 실행
       - . .venv/bin/activate && \
         nohup gunicorn --workers 3 --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
 
@@ -43,6 +43,3 @@ artifacts:
     - static/**/*
     - requirements.txt
   discard-paths: yes
-
-# reports:
-#   ...
