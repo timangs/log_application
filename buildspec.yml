@@ -2,53 +2,47 @@ version: 0.2
 
 phases:
   install:
-    runtime-versions:
-      python: 3.9  # 필요한 Python 버전. 이미지와 호환되는지 확인!
     commands:
+      - echo "Installing pyenv..."
+      - curl https://pyenv.run | bash
+      - echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+      - echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+      - echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n eval "$(pyenv init -)"\nfi' >> ~/.bashrc
+      - source ~/.bashrc  # 변경된 환경 변수 적용
+      - echo "Installing Python 3.9.18..." # 원하는 python version으로 변경
+      - pyenv install 3.9.18  # 원하는 Python 3.9.x 버전으로 변경
+      - pyenv global 3.9.18       # 시스템 전체의 기본 Python 버전으로 설정
       - echo "Updating pip..."
       - python -m pip install --upgrade pip
-      - echo "Installing gunicorn..."
-      - pip install gunicorn  # 배포에 필요하면 설치
-      - echo "Installing AWS CLI..."
-      - pip install awscli  # AWS CLI 설치
+      - echo "Installing gunicorn and AWS CLI..."
+      - pip install gunicorn awscli  # 한 번에 설치
 
   build:
     commands:
-      - set -e  # 오류 발생 시 즉시 종료
+      - set -e
       - echo "Entering build phase..."
       - echo "Installing dependencies from requirements.txt..."
-      - python -m venv .venv
-      - . .venv/bin/activate && \
-        pip install -r requirements.txt
+      - python -m venv .venv  # pyenv로 설치한 Python을 사용하여 가상 환경 생성
+      - . .venv/bin/activate
+      - pip install -r requirements.txt
 
       # (선택 사항) 테스트 및 코드 품질 검사 (필요한 경우 주석 해제)
-      # - echo "Running unit tests..."
-      # - pip install pytest
-      # - pytest tests/
-
-      # - echo "Running code quality checks..."
-      # - pip install flake8
-      # - flake8 .
+      # - ...
 
   post_build:
     commands:
       - echo "Build phase completed on `date`"
-
-      # 배포 관련 명령어 (필요에 따라 추가)
-      # 예: Gunicorn 실행 (EC2 배포 시)
-      - nohup gunicorn --workers 3 --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
-
-      # 예: Docker 이미지 빌드 및 ECR에 푸시 (ECS/Fargate 배포 시)
-      # - ...
+       # 가상 환경 활성화 후 Gunicorn 실행
+      - . .venv/bin/activate && \
+        nohup gunicorn --workers 3 --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
 
 artifacts:
   files:
-    - app.py      # 필요한 파일만 지정
-    - templates/**/*  # templates 폴더 및 하위 파일
-    - static/**/*   # static 폴더 및 하위 파일
+    - app.py
+    - templates/**/*
+    - static/**/*
     - requirements.txt
-    # - '...'  # 다른 필요한 파일/디렉토리
-  discard-paths: yes  # 필요에 따라
+  discard-paths: yes
 
-# reports:  # 테스트 리포트 설정 (필요한 경우)
+# reports:
 #   ...
