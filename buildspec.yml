@@ -4,14 +4,13 @@ phases:
   install:
     commands:
       - echo "Removing existing .pyenv directory (if any)..."
-      - rm -rf /root/.pyenv  # .pyenv 디렉토리 강제 삭제 (존재하는 경우)
-
+      - rm -rf /root/.pyenv
       - echo "Installing pyenv..."
       - curl https://pyenv.run | bash
       - echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
       - echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
       - echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n eval "$(pyenv init -)"\nfi' >> ~/.bashrc
-      - source ~/.bashrc  # 변경된 환경 변수 적용
+      - . ~/.bashrc  # source 대신 . 사용
       - echo "Installing Python 3.9.18..."
       - pyenv install 3.9.18
       - pyenv global 3.9.18
@@ -28,7 +27,7 @@ phases:
       - python -m venv .venv
       - . .venv/bin/activate
       - pip install -r requirements.txt
-      # ... (테스트, 코드 품질 검사 등)
+      # ...
 
   post_build:
     commands:
