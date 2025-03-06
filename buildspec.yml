@@ -36,8 +36,7 @@ phases:
 
       # 배포 관련 명령어 (필요에 따라 추가)
       # 예: Gunicorn 실행 (EC2 배포 시)
-      - . .venv/bin/activate && \
-        nohup gunicorn --workers 3 --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
+      - nohup gunicorn --workers 3 --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
 
       # 예: Docker 이미지 빌드 및 ECR에 푸시 (ECS/Fargate 배포 시)
       # - ...
